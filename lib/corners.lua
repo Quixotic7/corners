@@ -6,8 +6,8 @@ function Corners.new()
     
     c.dx = 0 -- x velocity
     c.dy = 0 -- y velocity
-    c.x = 0 -- x position
-    c.y = 0 -- y position
+    c.x = 4 -- x position
+    c.y = 4 -- y position
     -- c.i1 = nil
     -- c.i2 = nil
     c.g = 100 -- gravity
@@ -16,6 +16,11 @@ function Corners.new()
     c.f = 0.995 -- friction
     c.keys = 0 -- number of keys pressed
     c.r = {1, 1, 1, 1}
+
+    c.bLeft = nil
+    c.bRight = nil
+    c.bUp = nil
+    c.bDown = nil
 
     -- keeps track of grid presses
     c.p = {}
@@ -75,7 +80,19 @@ function Corners:bounds(xb, yb)
 end
 
 function Corners:outlet(i, val)
-    print("Outlet "..i..val)
+    -- print("Outlet "..i..val)
+
+    if i == 4 then
+        if val == 0 then
+            if self.bRight then self.bRight() end
+        elseif val == 1 then
+            if self.bUp then self.bUp() end
+        elseif val == 2 then
+            if self.bLeft then self.bLeft() end
+        elseif val == 3 then
+            if self.bDown then self.bDown() end
+        end
+    end
 end
 
 function Corners:bang()
@@ -112,10 +129,10 @@ function Corners:bang()
     end
     
     -- less than x boundary
-    if self.x < 0 then
+    if self.x < 0.5 then
         if self.r[2] == 1 then 
             self.dx = -self.dx
-            self.x = 0
+            self.x = 0.5
         else  
             self.x = self.x + self.bx
         end
@@ -137,10 +154,10 @@ function Corners:bang()
         self:outlet(4,3)
     end
     
-    if self.y < 0 then
+    if self.y < 0.5 then
         if self.r[1] == 1 then
             self.dy = -self.dy
-            self.y = 0
+            self.y = 0.5
         else
             self.y = self.y + self.by
         end
