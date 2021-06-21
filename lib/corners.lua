@@ -49,6 +49,10 @@ function Corners:ref(i, state)
     self.r[i] = state
 end
 
+function Corners:toggle_ref(i) 
+    self.r[i] = self.r[i] == 1 and 0 or 1
+end
+
 -- change gravity
 function Corners:grr(val)
     val = util.clamp(val, 0.0, 1.0)
@@ -119,7 +123,7 @@ function Corners:bang()
     
     -- greater than x boundary
     if self.x > self.bx then
-        if self.r[0] == 1 then -- wall, reflect
+        if self.r[1] == 1 then -- wall, reflect
             self.dx = -self.dx
             self.x = self.bx
         else  
@@ -130,7 +134,7 @@ function Corners:bang()
     
     -- less than x boundary
     if self.x < 0.5 then
-        if self.r[2] == 1 then 
+        if self.r[3] == 1 then 
             self.dx = -self.dx
             self.x = 0.5
         else  
@@ -145,7 +149,7 @@ function Corners:bang()
     
     -- greater than y boundary
     if self.y > self.by then
-        if self.r[3] == 1 then
+        if self.r[4] == 1 then
             self.dy = -self.dy
             self.y = self.by
         else 
@@ -155,7 +159,7 @@ function Corners:bang()
     end
     
     if self.y < 0.5 then
-        if self.r[1] == 1 then
+        if self.r[2] == 1 then
             self.dy = -self.dy
             self.y = 0.5
         else
@@ -173,6 +177,36 @@ function Corners:bang()
 end
 
 function Corners:grid_redraw(g)
+    local wallLed = 1
+
+    if self.r[1] == 1 then -- right wall
+        local wx = g.cols
+        for wy = 1, g.rows do
+            g:led(wx, wy, wallLed)
+        end
+    end
+
+    if self.r[3] == 1 then -- left wall
+        local wx = 1
+        for wy = 1, g.rows do
+            g:led(wx, wy, wallLed)
+        end
+    end
+
+    if self.r[2] == 1 then -- top wall
+        local wy = 1
+        for wx = 1, g.cols do
+            g:led(wx, wy, wallLed)
+        end
+    end
+
+    if self.r[4] == 1 then -- bottom wall
+        local wy = g.rows
+        for wx = 1, g.cols do
+            g:led(wx, wy, wallLed)
+        end
+    end
+
     local gx = util.round(self.x)
     local gy = util.round(self.y)
     g:led(gx, gy, 15)
