@@ -22,6 +22,8 @@ function Corners.new()
     c.bUp = nil
     c.bDown = nil
 
+    c.draw_walls = false
+
     -- keeps track of grid presses
     c.p = {}
     for x = 1, 16 do
@@ -177,6 +179,7 @@ function Corners:bang()
 end
 
 function Corners:grid_redraw(g)
+    if self.draw_walls then
     local wallLed = 1
 
     if self.r[1] == 1 then -- right wall
@@ -206,6 +209,7 @@ function Corners:grid_redraw(g)
             g:led(wx, wy, wallLed)
         end
     end
+end
 
     local gx = util.round(self.x)
     local gy = util.round(self.y)

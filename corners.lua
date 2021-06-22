@@ -4,14 +4,17 @@ musicutil = require 'musicutil'
 engine.name = "MollyThePoly"
 
 Corners_Lib = include('lib/corners')
+Corners_Screen = include('lib/corners_screen')
 Corners_Params = include('lib/corners_params')
 Engine_Bangs = include('lib/engine_bangs')
 Q7Util = include('lib/Q7Util')
+Vector2d = include('lib/vector2d')
 tabutil = include('lib/tabutil')
 Grid_Events_Handler = include('lib/grid_events')
 
 corners = Corners_Lib.new()
 bangs = Engine_Bangs.new()
+corners_screen = nil
 
 local g = grid.connect()
 local midi = midi.connect(1)
@@ -28,7 +31,8 @@ prev.dy = 0
 
 function init()
     corners:bounds(g.cols, g.rows)
-    -- corners:init()
+
+    corners_screen = Corners_Screen.new(corners, 0, 0, 128, 64, g.cols, g.rows)
     
     Corners_Params.add_params()
     params:set_action("cc_value_x", function() send_cc("x") end)
@@ -57,7 +61,8 @@ function init()
         local channel = params:get("b_midiChannel")
         note_off(noteNumber, defaultVel, channel)
     end
-    
+
+    clock.run(screen_redraw_clock) 
     clock.run(grid_redraw_clock) 
 end
 
@@ -73,6 +78,15 @@ end
 
 function enc(n, v)
     -- corners:enc(n, v)
+end
+
+function redraw()
+    screen.clear()
+    screen.aa(0)
+
+    corners_screen:draw()
+
+    screen.update()
 end
 
 g.key = function(x, y, z)
@@ -96,6 +110,13 @@ function grid_event(e)
     
     if e.y == g.rows and e.x > 1 and e.x < g.cols and e.type == "double_click" then
         corners:toggle_ref(4)
+    end
+end
+
+function screen_redraw_clock()
+    while true do -- while it's running...
+        redraw()
+        clock.sleep(1/15) -- refresh rate
     end
 end
 
