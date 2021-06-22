@@ -1,3 +1,10 @@
+-- corners 
+-- a norns port of tehn's m4l script
+-- use the grid to add gravity wells
+-- velocities, positions, and border crossings 
+-- are mapped to sound parameters and events. 
+-- @quixotic7 - Michael P Jones
+-- v1.1.1 
 MollyThePoly = require "molly_the_poly/lib/molly_the_poly_engine"
 musicutil = require 'musicutil'
 
@@ -6,6 +13,7 @@ engine.name = "MollyThePoly"
 Corners_Lib = include('lib/corners')
 Corners_Screen = include('lib/corners_screen')
 Corners_Params = include('lib/corners_params')
+Screen_Overlays = include('lib/screen_overlays')
 Engine_Bangs = include('lib/engine_bangs')
 Q7Util = include('lib/Q7Util')
 Vector2d = include('lib/vector2d')
@@ -14,6 +22,7 @@ Grid_Events_Handler = include('lib/grid_events')
 
 corners = Corners_Lib.new()
 bangs = Engine_Bangs.new()
+screen_overlays = Screen_Overlays.new()
 corners_screen = nil
 
 local g = grid.connect()
@@ -39,6 +48,15 @@ function init()
     params:set_action("cc_value_y", function() send_cc("y") end)
     params:set_action("cc_value_dx", function() send_cc("dx") end)
     params:set_action("cc_value_dy", function() send_cc("dy") end)
+
+    params:set_action("friction", function(value) 
+        screen_overlays:show_overlay(value, "friction") 
+    end)
+
+    params:set_action("gravity", function(value) 
+        screen_overlays:show_overlay(value, "gravity") 
+    end)
+
     
     MollyThePoly.add_params()
     MollyThePoly.randomize_params("lead")
@@ -69,8 +87,6 @@ function init()
     params:set("cc_enabled_dx", 2)
     params:set("cc_intern_dx", 4)
 
-
-    
     clock.run(screen_redraw_clock) 
     clock.run(grid_redraw_clock) 
 end
@@ -80,12 +96,16 @@ function key(n, v)
     
     if n == 2 and v == 1 then
         MollyThePoly.randomize_params("lead")
+        screen_overlays:show_overlay("random lead")
     elseif n == 3 and v == 1 then
         MollyThePoly.randomize_params("perc")
+        screen_overlays:show_overlay("random perc")
     end
 end
 
 function enc(n, v)
+    if n == 2 then params:delta("friction", v) end
+    if n == 3 then params:delta("gravity", v) end
     -- corners:enc(n, v)
 end
 
@@ -94,6 +114,7 @@ function redraw()
     screen.aa(0)
     
     corners_screen:draw()
+    screen_overlays:draw()
     
     screen.update()
 end
