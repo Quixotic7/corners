@@ -31,7 +31,7 @@ prev.dy = 0
 
 function init()
     corners:bounds(g.cols, g.rows)
-
+    
     corners_screen = Corners_Screen.new(corners, 0, 0, 128, 64, g.cols, g.rows)
     
     Corners_Params.add_params()
@@ -62,6 +62,15 @@ function init()
         note_off(noteNumber, defaultVel, channel)
     end
 
+    params:set("cc_enabled_x", 2)
+    params:set("cc_intern_x", 24)
+    params:set("cc_enabled_y", 2)
+    params:set("cc_intern_y", 14)
+    params:set("cc_enabled_dx", 2)
+    params:set("cc_intern_dx", 4)
+
+
+    
     clock.run(screen_redraw_clock) 
     clock.run(grid_redraw_clock) 
 end
@@ -83,9 +92,9 @@ end
 function redraw()
     screen.clear()
     screen.aa(0)
-
+    
     corners_screen:draw()
-
+    
     screen.update()
 end
 
@@ -99,11 +108,11 @@ function grid_event(e)
     if e.x == g.cols and e.y > 1 and e.y < g.rows and e.type == "double_click" then
         corners:toggle_ref(1)
     end
-
+    
     if e.x == 1 and e.y > 1 and e.y < g.rows and e.type == "double_click" then
         corners:toggle_ref(3)
     end
-
+    
     if e.y == 1 and e.x > 1 and e.x < g.cols and e.type == "double_click" then
         corners:toggle_ref(2)
     end
@@ -136,56 +145,60 @@ function grid_redraw()
     corners:bang()
     
     -- play notes while holding keys
-    if corners.keys ~= prevKeys then
-        if corners.keys == 0 then
-            local channel = params:get("key_midiChannel")
-            
-            local noteNumber = params:get(KEY_PARAMS[prevKeys])
-            note_off(noteNumber, defaultVel, channel)
-            prevKeys = corners.keys
-        else
-            if corners.keys <= #KEY_PARAMS then
+    if params:get("enableKeys") == 2 then
+        if corners.keys ~= prevKeys then
+            if corners.keys == 0 then
                 local channel = params:get("key_midiChannel")
                 
-                if prevKeys ~= 0 then
-                    local prevNoteNumber = params:get(KEY_PARAMS[prevKeys])
-                    note_off(prevNoteNumber, defaultVel, channel)
-                end
-                local noteNumber = params:get(KEY_PARAMS[corners.keys])
-                note_on(noteNumber, defaultVel, channel)
+                local noteNumber = params:get(KEY_PARAMS[prevKeys])
+                note_off(noteNumber, defaultVel, channel)
                 prevKeys = corners.keys
+            else
+                if corners.keys <= #KEY_PARAMS then
+                    local channel = params:get("key_midiChannel")
+                    
+                    if prevKeys ~= 0 then
+                        local prevNoteNumber = params:get(KEY_PARAMS[prevKeys])
+                        note_off(prevNoteNumber, defaultVel, channel)
+                    end
+                    local noteNumber = params:get(KEY_PARAMS[corners.keys])
+                    note_on(noteNumber, defaultVel, channel)
+                    prevKeys = corners.keys
+                end
             end
         end
     end
-
+    
     if corners.x ~= prev.x then
         local val = util.round(util.linlin(0, g.cols, 0, 127, corners.x))
         params:set("cc_value_x", val)
         prev.x = corners.x
     end
     if corners.y ~= prev.y then
-        local val = util.round(util.linlin(0, g.cols, 0, 127, corners.y))
+        local val = util.round(util.linlin(0, g.rows, 0, 127, corners.y))
         params:set("cc_value_y", val)
         prev.y = corners.y
     end
-
+    
+    local gRatio = g.cols / g.rows
+    
     if corners.dx ~= prev.dx then
-        local val = util.round(util.linlin(-4.0, 4.0, 0, 127, corners.dx))
+        local val = util.round(util.linlin(-2.0 * gRatio, 2.0 * gRatio, 0, 127, corners.dx))
         params:set("cc_value_dx", val)
         -- print("dx "..val)
         prev.dx = corners.dx
     end
-
+    
     if corners.dy ~= prev.dy then
         local val = util.round(util.linlin(-2.0, 2.0, 0, 127, -corners.dy))
         params:set("cc_value_dy", val)
         -- print("dy "..val)
         prev.dy = corners.dy
     end
-
+    
     -- print(corners.dx)
     -- print(corners.dx)
-
+    
     
     -- send_cc("x")
     
@@ -242,5 +255,24 @@ function send_cc(id)
         local valMin, valMax = Q7Util.get_min_max(params:get("cc_min_"..id), params:get("cc_max_"..id))
         local val = util.round(util.linlin(0,127, valMin, valMax, value))
         midi:cc(cc, val, channel)
+    end
+    
+    send_cc_intern(id)
+end
+
+function send_cc_intern(id)
+    if params:get("internCCs") == 2 and params:get("cc_enabled_"..id) == 2 then
+        local ccParam = SYNTH_CC_PARAMS[params:get("cc_intern_"..id)]
+
+        if ccParam == "none" then return end
+        
+        local value = params:get("cc_value_"..id)
+        local valMin, valMax = Q7Util.get_min_max(params:get("cc_min_"..id), params:get("cc_max_"..id))
+        local val = util.linlin(0,127, valMin, valMax, value)
+        val = util.linlin(0, 127, 0, 1, val)
+        
+        -- print("Val "..val)
+        
+        params:set_raw(ccParam, val)
     end
 end

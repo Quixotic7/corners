@@ -9,6 +9,12 @@ controlSpecs.noteLengthMin = controlspec.new(0, 16.0, 'lin', 0.01, 1/4, 'bt', 1/
 controlSpecs.noteLengthMax = controlspec.new(0, 16.0, 'lin', 0.01, 1/16, 'bt', 1/24/10)
 
 KEY_PARAMS = {"key1", "key2", "key3", "key4"}
+SYNTH_CC_PARAMS = {"none", 
+"amp", "amp_mod", 
+"lp_filter_cutoff", "lp_filter_resonance", "hp_filter_cutoff", "lp_filter_mod_env", "lp_filter_mod_lfo", "lp_filter_tracking", 
+"pulse_width_mod", "main_osc_level", "sub_osc_level", "sub_osc_detune", "noise_level", "freq_mod_lfo", "freq_mod_env", "glide", "lfo_freq", "lfo_fade", 
+"env_1_attack", "env_1_decay", "env_1_sustain", "env_1_release", "env_2_attack", "env_2_decay", "env_2_sustain", "env_2_release", 
+"ring_mod_freq", "ring_mod_fade", "ring_mod_mix", "chorus_mix"}
 
 function Corners_Params.formatNote(param)
     return musicutil.note_num_to_name(param:get(), true)
@@ -24,6 +30,14 @@ function Corners_Params.add_params()
             engine.noteOffAll()
         end
     end}
+
+    params:add{type = "option", id = "enableKeys", name = "Enable Keys", options = {"off", "on"}, default = 2, action = function(value)
+        if value ~= 2 then
+            engine.noteOffAll()
+        end
+    end}
+    params:add{type = "option", id = "internCCs", name = "Intern CCs", options = {"off", "on"}, default = 2}
+
     params:add{type = "option", id = "midiOut", name = "Midi Out", options = {"off", "on"}, default = 1}
     params:add{type = "number", id = "b_midiChannel", name = "B Channel", min = 1, max = 16, default = 1 }
     params:add{type = "number", id = "key_midiChannel", name = "Key Channel", min = 1, max = 16, default = 2 }
@@ -56,13 +70,14 @@ function Corners_Params.add_params()
 end
 
 function Corners_Params.add_midi_control(groupName, controlName)
-    params:add_group(groupName, 6)
+    params:add_group(groupName, 7)
     params:add{type = "option", id = "cc_enabled_"..controlName, name = "Enabled", options = {"off", "on"}, default = 1}
     params:add{type = "number", id = "cc_"..controlName, name = "CC", min = 0, max = 127, default = 23}
     params:add{type = "number", id = "cc_value_"..controlName, name = "Value", min = 0, max = 127, default = 0}
     params:add{type = "number", id = "cc_min_"..controlName, name = "Min Value", min = 0, max = 127, default = 0}
     params:add{type = "number", id = "cc_max_"..controlName, name = "Min Value", min = 0, max = 127, default = 127}
     params:add{type = "number", id = "cc_channel_"..controlName, name = "Channel", min = 1, max = 16, default = 1 }
+    params:add{type = "option", id = "cc_intern_"..controlName, name = "Intern Param", options = SYNTH_CC_PARAMS, default = 1}
 end
 
 return Corners_Params
