@@ -52,7 +52,13 @@ https://www.instagram.com/p/CQY2rOaKitS/
 system > reset then launch corners
 
 ## version notes
+**v1.1.2**
+
+- updated params to make it easier to change sound sources for boundary events and key events. 
+- added fix to prevent stuck notes if changing sound settings. 
+
 **v1.1.1**
+
 - initial release
 
 ## links
