@@ -29,10 +29,17 @@ https://www.instagram.com/p/CQY2rOaKitS/
 
 ## doc
 
+* **key 1** shift
 * **key 2** random lead
-* **key 3** random perc
+* **key 3** generate random notes
+* **enc 1** scale for random note generation
 * **enc 2** friction
 * **enc 3** gravity
+* **shift + key 2** random pad
+* **shift + key 3** random pad
+* **shift + enc 1** root note for random note generation
+* **shift + enc 2** b octave for random note generation
+* **shift + enc 3** b octave range for random note generation
 
 * **grid** press and hold a key to create a gravity well to manipulate the puck. notes are triggered while holding keys
 * **double click grid edge** toggle a boundary's reflection between bounce or warp
@@ -52,6 +59,10 @@ https://www.instagram.com/p/CQY2rOaKitS/
 system > reset then launch corners
 
 ## version notes
+**v1.1.4**
+- Added the ability to generate random notes within a scale and octave range. Key shortcuts added to quickly generate new notes. Can also generate random notes every boundary crossing. 
+- Fixed bug with the key forces being uneven. 
+
 **v1.1.3**
 - added separate physics update that is synced to the clock. you can change the sync rate in the params menu. 
 - walls now light up when the puck reflects

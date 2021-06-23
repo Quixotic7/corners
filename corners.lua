@@ -4,7 +4,7 @@
 -- velocities, positions, and border crossings 
 -- are mapped to sound parameters and events. 
 -- @quixotic7 - Michael P Jones
--- v1.1.3
+-- v1.1.4
 MollyThePoly = require "molly_the_poly/lib/molly_the_poly_engine"
 musicutil = require 'musicutil'
 
@@ -41,6 +41,10 @@ prev.dy = 0
 local b_notes = {}
 local key_notes = {}
 
+local b_rand_scale = {}
+
+local shift_down = false
+
 function init()
     
     for i = 1, 4 do
@@ -60,6 +64,23 @@ function init()
     params:set_action("key_deviceId", function() key_off_all() end)
     params:set_action("key_midiChannel", function() key_off_all() end)
     
+    params:set_action("rootNote", function(value) 
+        gen_b_scale() 
+        screen_overlays:show_overlay(musicutil.NOTE_NAMES[value], "rootNote") 
+    end)
+    params:set_action("scaleMode", function(value) 
+        gen_b_scale() 
+        screen_overlays:show_overlay(SCALE_NAMES[value], "scale") 
+    end)
+    params:set_action("b_octave", function(value) 
+        gen_b_scale() 
+        screen_overlays:show_overlay(value, "b octave") 
+        
+    end)
+    params:set_action("b_octRange", function(value) 
+        gen_b_scale() 
+        screen_overlays:show_overlay(value, "b octave range") 
+    end)
     
     params:set_action("cc_value_x", function() send_cc("x") end)
     params:set_action("cc_value_y", function() send_cc("y") end)
@@ -95,27 +116,52 @@ function init()
     params:set("cc_enabled_dx", 2)
     params:set("cc_intern_dx", 4)
     
+    gen_b_scale()
+    
     clock.run(physics_update_clock) 
     clock.run(screen_redraw_clock) 
     clock.run(grid_redraw_clock) -- grid drawing happens in physics_update_clock, synced to clock
+
+    screen_overlays:show_overlay("")
+
 end
 
 function key(n, v)
     -- corners:key(n, v)
     
-    if n == 2 and v == 1 then
-        MollyThePoly.randomize_params("lead")
-        screen_overlays:show_overlay("random lead")
-    elseif n == 3 and v == 1 then
-        MollyThePoly.randomize_params("perc")
-        screen_overlays:show_overlay("random perc")
+    if n == 1 then
+        shift_down = v == 1
+    end
+    
+    if shift_down then
+        if n == 2 and v == 1 then
+            MollyThePoly.randomize_params("pad")
+            screen_overlays:show_overlay("random pad")
+        elseif n == 3 and v == 1 then
+            MollyThePoly.randomize_params("perc")
+            screen_overlays:show_overlay("random perc")
+        end
+    else
+        if n == 2 and v == 1 then
+            MollyThePoly.randomize_params("lead")
+            screen_overlays:show_overlay("random lead")
+        elseif n == 3 and v == 1 then
+            Corners_Params.generate_notes()
+            screen_overlays:show_overlay("randomize notes")
+        end
     end
 end
 
 function enc(n, v)
-    if n == 2 then params:delta("friction", v) end
-    if n == 3 then params:delta("gravity", v) end
-    -- corners:enc(n, v)
+    if shift_down then
+        if n == 1 then params:delta("rootNote", v) end
+        if n == 2 then params:delta("b_octave", v) end
+        if n == 3 then params:delta("b_octRange", v) end
+    else
+        if n == 1 then params:delta("scaleMode", v) end
+        if n == 2 then params:delta("friction", v) end
+        if n == 3 then params:delta("gravity", v) end
+    end
 end
 
 function redraw()
@@ -158,7 +204,6 @@ function screen_redraw_clock()
         clock.sleep(1/15) -- refresh rate
     end
 end
-
 
 function grid_redraw_clock() -- our grid redraw clock
     while true do -- while it's running...
@@ -239,12 +284,21 @@ function grid_redraw()
     g:refresh()
 end
 
+function gen_b_scale()
+    local b_root = params:get("rootNote") + (12 * (params:get("b_octave") - 1))
+    b_rand_scale = musicutil.generate_scale(b_root, params:get("scaleMode"), params:get("b_octRange"))
+end
+
 function bang_note(noteNumber)
     local velMin, velMax = Q7Util.get_min_max(params:get("b_velMin"), params:get("b_velMax"))
     local vel = util.round(util.linlin(0,1, velMin, velMax, math.random()))
     
     local lengthMin, lengthMax = Q7Util.get_min_max(params:get("b_noteLengthMin"), params:get("b_noteLengthMax"))
     local length = util.linlin(0,1, lengthMin, lengthMax, math.random())
+    
+    if params:get("b_randomNotes") == 2 then
+        noteNumber = b_rand_scale[math.random(1, #b_rand_scale)]
+    end
     
     bangs:bang(noteNumber, vel, length)
 end

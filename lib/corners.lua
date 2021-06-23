@@ -142,8 +142,11 @@ function Corners:bang()
         for i2 = 1, 16 do
             if self.p[i1][i2] == 1 then
                 -- apply gravity to points
-                self.dx = self.dx + (i1 - self.x + 0.5) / self.g
-                self.dy = self.dy + (i2 - self.y + 0.5) / self.g
+                local fx = i1 - 1
+                local fy = i2 - 1
+
+                self.dx = self.dx + (fx - self.x + 0.5) / self.g
+                self.dy = self.dy + (fy - self.y + 0.5) / self.g
                 self.keys = self.keys + 1
             end
         end
