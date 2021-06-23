@@ -3,8 +3,8 @@ Corners_Params.__index = Corners_Params
 
 local controlSpecs = {}
 
-controlSpecs.friction = controlspec.new(0, 1, 'lin', 0, 0.4, '%')
-controlSpecs.gravity = controlspec.new(0, 1, 'lin', 0, 0.98, '%')
+controlSpecs.friction = controlspec.new(0, 1, 'lin', 0, 0.35, '%')
+controlSpecs.gravity = controlspec.new(0, 1, 'lin', 0, 0.9, '%')
 controlSpecs.noteLengthMin = controlspec.new(0, 16.0, 'lin', 0.01, 1/4, 'bt', 1/24/10)
 controlSpecs.noteLengthMax = controlspec.new(0, 16.0, 'lin', 0.01, 1/16, 'bt', 1/24/10)
 
@@ -16,6 +16,9 @@ SYNTH_CC_PARAMS = {"none",
 "pulse_width_mod", "main_osc_level", "sub_osc_level", "sub_osc_detune", "noise_level", "freq_mod_lfo", "freq_mod_env", "glide", "lfo_freq", "lfo_fade", 
 "env_1_attack", "env_1_decay", "env_1_sustain", "env_1_release", "env_2_attack", "env_2_decay", "env_2_sustain", "env_2_release", 
 "ring_mod_freq", "ring_mod_fade", "ring_mod_mix", "chorus_mix"}
+SYNC_RATES = {"1/1", "1/2", "1/4", "1/8", "1/16", "1/32"}
+SYNC_RATE_VALUES = {(1/1), (1/2), (1/4), (1/8), (1/16), (1/32)}
+
 
 function Corners_Params.formatNote(param)
     return musicutil.note_num_to_name(param:get(), true)
@@ -25,6 +28,7 @@ function Corners_Params.add_params()
     params:add_separator()
     params:add{type = "control", id = "friction", name = "Friction", controlspec = controlSpecs.friction}
     params:add{type = "control", id = "gravity", name = "Gravity", controlspec = controlSpecs.gravity}
+    params:add{type = "option", id = "physicsRate", name = "Physics Clock", options = SYNC_RATES, default = 5}
     params:add_separator()
     params:add{type = "option", id = "bSound", name = "B Sound", options = SOUND_OPTIONS, default = 2}
     params:add{type = "option", id = "keySound", name = "Key Sound", options = SOUND_OPTIONS, default = 2}

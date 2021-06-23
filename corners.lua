@@ -4,7 +4,7 @@
 -- velocities, positions, and border crossings 
 -- are mapped to sound parameters and events. 
 -- @quixotic7 - Michael P Jones
--- v1.1.2
+-- v1.1.3
 MollyThePoly = require "molly_the_poly/lib/molly_the_poly_engine"
 musicutil = require 'musicutil'
 
@@ -59,8 +59,8 @@ function init()
     params:set_action("b_midiChannel", function() b_off_all() end)
     params:set_action("key_deviceId", function() key_off_all() end)
     params:set_action("key_midiChannel", function() key_off_all() end)
-
-
+    
+    
     params:set_action("cc_value_x", function() send_cc("x") end)
     params:set_action("cc_value_y", function() send_cc("y") end)
     params:set_action("cc_value_dx", function() send_cc("dx") end)
@@ -78,7 +78,7 @@ function init()
     MollyThePoly.randomize_params("lead")
     
     grid_events.grid_event = function (e) grid_event(e) end
-
+    
     bangs.note_on = b_note_on
     bangs.note_off = b_note_off
     
@@ -86,7 +86,7 @@ function init()
     corners.bLeft = function() bang_note(params:get("bLeft")) end
     corners.bUp = function() bang_note(params:get("bUp")) end
     corners.bDown = function() bang_note(params:get("bDown")) end
-
+    
     -- set some default param mappings for fun and profit
     params:set("cc_enabled_x", 2)
     params:set("cc_intern_x", 24)
@@ -95,8 +95,9 @@ function init()
     params:set("cc_enabled_dx", 2)
     params:set("cc_intern_dx", 4)
     
+    clock.run(physics_update_clock) 
     clock.run(screen_redraw_clock) 
-    clock.run(grid_redraw_clock) 
+    clock.run(grid_redraw_clock) -- grid drawing happens in physics_update_clock, synced to clock
 end
 
 function key(n, v)
@@ -135,19 +136,19 @@ end
 
 function grid_event(e)
     if e.x == g.cols and e.y > 1 and e.y < g.rows and e.type == "double_click" then
-        corners:toggle_ref(1)
+        corners:toggle_ref(1, e.x, e.y)
     end
     
     if e.x == 1 and e.y > 1 and e.y < g.rows and e.type == "double_click" then
-        corners:toggle_ref(3)
+        corners:toggle_ref(3, e.x, e.y)
     end
     
     if e.y == 1 and e.x > 1 and e.x < g.cols and e.type == "double_click" then
-        corners:toggle_ref(2)
+        corners:toggle_ref(2, e.x, e.y)
     end
     
     if e.y == g.rows and e.x > 1 and e.x < g.cols and e.type == "double_click" then
-        corners:toggle_ref(4)
+        corners:toggle_ref(4, e.x, e.y)
     end
 end
 
@@ -161,14 +162,24 @@ end
 
 function grid_redraw_clock() -- our grid redraw clock
     while true do -- while it's running...
+        physics_update()
         grid_redraw()
-        -- clock.sleep(1/15) -- refresh rate
-        
         clock.sleep(1/20) -- refresh rate
     end
 end
 
-function grid_redraw()
+function physics_update_clock()
+    while true do -- while it's running...
+        local sync_rate = SYNC_RATE_VALUES[params:get("physicsRate")]
+        clock.sync(sync_rate)
+        physics_update()
+        -- if corners.grid_dirty then
+        --     grid_redraw() -- may be problem for midi grids if sync_rate is too high
+        -- end
+    end
+end
+
+function physics_update()
     corners:fric(params:get("friction"))
     corners:grr(params:get("gravity"))
     corners:bang()
@@ -218,7 +229,9 @@ function grid_redraw()
         -- print("dy "..val)
         prev.dy = corners.dy
     end
-    
+end
+
+function grid_redraw()
     g:all(0)
     
     corners:grid_redraw(g)
@@ -255,21 +268,21 @@ end
 function b_note_on(noteNumber, vel)
     -- print("NoteOn "..noteNumber)
     local soundDest = SOUND_OPTIONS[params:get("bSound")]
-        
+    
     local sendIntern = ((soundDest == "internal") or (soundDest == "intern + midi"))
     local sendMidi = ((soundDest == "midi") or (soundDest == "intern + midi"))
     
     local deviceId = params:get("b_deviceId")
     local channel = params:get("b_midiChannel")
     note_on(sendIntern, sendMidi, noteNumber, vel, deviceId, channel)
-
+    
     b_notes[noteNumber] = {intern = sendIntern, midi = sendMidi, note = noteNumber, v = vel, d = deviceId, chan = channel}
 end
 
 function b_note_off(noteNumber)
     -- print("NoteOff")
     local soundDest = SOUND_OPTIONS[params:get("bSound")]
-        
+    
     local sendIntern = ((soundDest == "internal") or (soundDest == "intern + midi"))
     local sendMidi = ((soundDest == "midi") or (soundDest == "intern + midi"))
     
@@ -277,7 +290,7 @@ function b_note_off(noteNumber)
     local channel = params:get("b_midiChannel")
     
     note_off(sendIntern, sendMidi, noteNumber, defaultVel, deviceId, channel)
-
+    
     b_notes[noteNumber] = nil
 end
 
@@ -303,9 +316,9 @@ function key_note_off(noteNumber)
     local deviceId = params:get("key_deviceId")
     local channel = params:get("key_midiChannel")
     local vel = params:get("key_vel")
-
+    
     note_off(sendIntern, sendMidi, noteNumber, vel, deviceId, channel)
-
+    
     key_notes[noteNumber] = nil
 end
 

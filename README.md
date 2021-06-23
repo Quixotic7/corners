@@ -52,6 +52,10 @@ https://www.instagram.com/p/CQY2rOaKitS/
 system > reset then launch corners
 
 ## version notes
+**v1.1.3**
+- added separate physics update that is synced to the clock. you can change the sync rate in the params menu. 
+- walls now light up when the puck reflects
+
 **v1.1.2**
 
 - updated params to make it easier to change sound sources for boundary events and key events. 
